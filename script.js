@@ -86,10 +86,12 @@ const calcDisplaySummary = function(acc) {
   labelSumInterest.textContent = `${interest}€`
 }
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   containerMovements.innerHTML = '';
 
-  movements.forEach(function(mov, i) {
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  movs.forEach(function(mov, i) {
 
     const type = mov > 0 ? 'deposit' : 'withdrawal'; 
     const html = `
@@ -164,6 +166,19 @@ btnTransfer.addEventListener('click', function(e) {
     }
 })
 
+btnLoan.addEventListener('click', function(e) {
+  e.preventDefault();
+  const amount = Number(inputLoanAmount.value);
+
+  if(amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    currentAccount.movements.push(amount)
+
+    updateUI(currentAccount)
+  }
+
+  inputLoanAmount.value = '';
+})
+
 btnClose.addEventListener('click', function(e){
   e.preventDefault();
 
@@ -176,3 +191,19 @@ btnClose.addEventListener('click', function(e){
   inputCloseUsername.value = inputClosePin = '';
 
 })
+
+let sorted = false;
+
+btnSort.addEventListener('click', function(e) {
+  e.preventDefault();
+
+  displayMovements(currentAccount.movements, !sorted);
+  sorted = !sorted;
+})
+
+
+// Calculating All Balance
+// const allBalance = accounts
+// .flatMap(acc => acc.movements)
+// .reduce((acc, mov) => acc + mov, 0)
+// console.log(allBalance)
