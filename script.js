@@ -125,14 +125,14 @@ const updateUI = function(acc) {
   calcDisplayBalance(acc);
 }
 
-let currentAccount;
+let currentAccount, timer;
 
 btnLogin.addEventListener('click', function(e) {
   e.preventDefault();
 
   currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value);
 
-  if(currentAccount?.pin === Number(inputLoginPin.value)){
+  if(currentAccount?.pin === +(inputLoginPin.value)){
 
     //Display UI and Welcome message
     labelWelcome.textContent = `Welcome back, ${currentAccount.owner.split(' ')[0]}`
@@ -141,6 +141,11 @@ btnLogin.addEventListener('click', function(e) {
     //Clear input Field
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
+
+    if(timer){
+      clearInterval(timer);
+    }
+    timer = startLogOutTimer();
 
     updateUI(currentAccount)
   }
@@ -151,7 +156,7 @@ btnLogin.addEventListener('click', function(e) {
 btnTransfer.addEventListener('click', function(e) {
   e.preventDefault();
 
-  const amount = Number(inputTransferAmount.value);
+  const amount = +(inputTransferAmount.value);
   const receiverAcc = accounts.find(acc => acc.username === inputTransferTo.value);  
   inputTransferAmount.value = inputTransferTo.value = '';
 
@@ -163,17 +168,23 @@ btnTransfer.addEventListener('click', function(e) {
       receiverAcc.movements.push(amount);
 
       updateUI(currentAccount);
+
+      clearInterval(timer);
+      timer = startLogOutTimer();
     }
 })
 
 btnLoan.addEventListener('click', function(e) {
   e.preventDefault();
-  const amount = Number(inputLoanAmount.value);
+  const amount = +(inputLoanAmount.value);
 
   if(amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
     currentAccount.movements.push(amount)
 
     updateUI(currentAccount)
+
+    clearInterval(timer);
+    timer = startLogOutTimer();
   }
 
   inputLoanAmount.value = '';
@@ -182,7 +193,7 @@ btnLoan.addEventListener('click', function(e) {
 btnClose.addEventListener('click', function(e){
   e.preventDefault();
 
-  if(currentAccount.username === inputCloseUsername.value && currentAccount.pin === Number(inputClosePin.value)) {
+  if(currentAccount.username === inputCloseUsername.value && currentAccount.pin === +(inputClosePin.value)) {
     const index = accounts.findIndex(acc => acc.username === currentAccount.username);
     accounts.splice(index, 1);
     containerApp.style.opacity = 0;
@@ -207,3 +218,40 @@ btnSort.addEventListener('click', function(e) {
 // .flatMap(acc => acc.movements)
 // .reduce((acc, mov) => acc + mov, 0)
 // console.log(allBalance)
+
+
+
+//Dates
+
+const now = new Date();
+const day = now.getDate();
+const month = now.getMonth() + 1;
+const year = now.getFullYear();
+const hour = now.getHours();
+const min = now.getMinutes();
+
+labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`
+
+
+const startLogOutTimer = function() {
+
+  const tick = function() {
+    const min = String(Math.trunc(time/60)).padStart(2, 0);
+    const sec = String(Math.trunc(time%60)).padStart(2, 0);
+
+    labelTimer.textContent = `${min}:${sec}`;
+
+    if(time === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = 'Log in to get started'
+      containerApp.style.opacity = 0;
+    }
+
+    time--
+  }
+
+  let time = 600;
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+}
